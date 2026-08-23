@@ -6,31 +6,22 @@ using System.Text;
 
 namespace LPR381Solver.Core
 {
-    /// <summary>
-    /// A single simplex-style tableau snapshot. Every algorithm (Primal Simplex,
-    /// Revised Primal Simplex, Branch &amp; Bound, Cutting Plane) produces a
-    /// sequence of these for the output file, and Sensitivity Analysis operates
-    /// on the *final* tableau of whichever run produced it - so this shape has
-    /// to work generically for all of them, not just one algorithm.
-    ///
-    /// Convention: row 0 is always the objective (z) row. Rows 1..m are
-    /// constraint rows. The last column is always RHS.
-    /// </summary>
+    
     public class Tableau
     {
-        /// <summary>[row, col] matrix. Row 0 = objective row, rows 1..m = constraints. Last column = RHS.</summary>
+        /// [row, col] matrix. Row 0 = objective row, rows 1..m = constraints. Last column = RHS.
         public double[,] Matrix { get; private set; }
 
-        /// <summary>Column index of the basic variable for constraint row (index i -> row i+1's basic variable).</summary>
+        /// Column index of the basic variable for constraint row (index i -> row i+1's basic variable).
         public List<int> BasicVariableIndices { get; private set; }
 
-        /// <summary>Display name for every column except RHS, in column order (e.g. x1, x2, s1, a1).</summary>
+        ///Display name for every column except RHS, in column order (e.g. x1, x2, s1, a1).
         public List<string> VariableNames { get; }
 
-        /// <summary>What kind of variable each column represents - lets sensitivity analysis know which operations are valid on which column.</summary>
+        /// What kind of variable each column represents - lets sensitivity analysis know which operations are valid on which column.
         public List<VariableKind> VariableKinds { get; }
 
-        /// <summary>Which iteration of its algorithm this snapshot represents - printed in the output file so every step is traceable.</summary>
+        /// iteration of its algorithm this snapshot represents - printed in the output file so every step is traceable.
         public int IterationNumber { get; set; }
 
         public int RowCount => Matrix.GetLength(0);
@@ -59,7 +50,6 @@ namespace LPR381Solver.Core
 
         /// <summary>
         /// Deep copy. Every simplex pivot and every "what-if" sensitivity change
-        /// works on a clone so earlier iterations stay intact and correct in the
         /// output file's iteration history.
         /// </summary>
         public Tableau Clone()
@@ -103,11 +93,9 @@ namespace LPR381Solver.Core
             return true;
         }
 
-        /// <summary>
         /// Renders this tableau exactly as the output file needs it: a header
         /// row of variable names, then each row labelled by its basic variable,
         /// all values rounded to 3 decimals per the brief's rounding rule.
-        /// </summary>
         public string ToFormattedString()
         {
             var sb = new StringBuilder();
