@@ -15,10 +15,10 @@ namespace LPR381Solver.Algorithms
             new PrimalSimplexAlgorithm(),
 
             // Add your algorithm below once it implements IAlgorithm:
-            // new RevisedPrimalSimplexAlgorithm(),   // Person B
+            new PrimalSimplexAlgorithm(),   // Person B
             BranchAndBoundSimplexAlgorithm(),
-            // new CuttingPlaneAlgorithm(),            // Person B
-            // new BranchAndBoundKnapsackAlgorithm(), // Person D
+            new CuttingPlane Algorithm(),            // Person B
+            // new BranchAndBo64undKnapsackAlgorithm(), // Person D
         };
     }
 }
