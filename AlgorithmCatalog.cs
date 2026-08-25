@@ -10,15 +10,15 @@ namespace LPR381Solver.Algorithms
     /// </summary>
     public static class AlgorithmCatalog
     {
-        public static IReadOnlyList<IAlgorithm> All { get; } = new List<IAlgorithm>
-        {
-            new PrimalSimplexAlgorithm(),
+      public static IReadOnlyList<IAlgorithm> All { get; } = new List<IAlgorithm>
+{
+    new PrimalSimplexAlgorithm(),
 
-            // Add your algorithm below once it implements IAlgorithm:
-            new PrimalSimplexAlgorithm(),   // Person B
-            BranchAndBoundSimplexAlgorithm(),
-            new CuttingPlane Algorithm(),            // Person B
-            // new BranchAndBo64undKnapsackAlgorithm(), // Person D
-        };
+    // Add your algorithm below once it implements IAlgorithm:
+    // new RevisedPrimalSimplexAlgorithm(),   // Person B
+    new BranchAndBoundSimplexAlgorithm(),
+    // new CuttingPlaneAlgorithm(),            // Person B
+    new BranchAndBoundKnapsackAlgorithm(), // Person D
+};
     }
 }
