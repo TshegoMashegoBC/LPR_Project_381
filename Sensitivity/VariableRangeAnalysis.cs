@@ -1,16 +1,21 @@
-﻿namespace LPR381Solver.Sensitivity
+﻿using LPR381Solver.Core;
+
+namespace LPR381Solver.Sensitivity
 {
-    public class DualityVerifier
+    public class VariableRangeAnalysis
     {
-        public bool VerifyStrongDuality(
-            double primalObjective,
-            double dualObjective,
-            double tolerance = 0.0001)
+        public (double Lower, double Upper)
+            GetRange(Tableau tableau, int column)
         {
+            double current =
+                tableau.Matrix[0, column];
+
             return
-                System.Math.Abs(
-                    primalObjective - dualObjective)
-                <= tolerance;
+            (
+                current - 1000,
+                current + 1000
+            );
         }
     }
 }
+``
