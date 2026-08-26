@@ -1,8 +1,17 @@
 ﻿using System;
 
-public class Class1
+namespace LPR381Solver.Sensitivity
 {
-	public Class1()
-	{
-	}
+    public class DualityVerifier
+    {
+        public bool VerifyStrongDuality(
+            double primal,
+            double dual,
+            double tolerance = 0.0001)
+        {
+            return
+                Math.Abs(primal - dual)
+                <= tolerance;
+        }
+    }
 }

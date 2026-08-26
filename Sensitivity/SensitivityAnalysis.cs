@@ -6,23 +6,20 @@ namespace LPR381Solver.Sensitivity
     public class SensitivityAnalysis
     {
         private readonly ShadowPriceCalculator
-            _shadowPriceCalculator =
-                new();
+            shadowPrices = new();
 
         private readonly RHSAnalysis
-            _rhsAnalysis =
-                new();
+            rhsAnalysis = new();
 
         private readonly VariableRangeAnalysis
-            _rangeAnalysis =
-                new();
+            variableAnalysis = new();
 
         public Dictionary<string, double>
             GetShadowPrices(Tableau tableau)
         {
             return
-                _shadowPriceCalculator
-                .Calculate(tableau);
+                shadowPrices.Calculate(
+                    tableau);
         }
 
         public (double Lower, double Upper)
@@ -31,8 +28,7 @@ namespace LPR381Solver.Sensitivity
                 int column)
         {
             return
-                _rangeAnalysis
-                .GetSimpleRange(
+                variableAnalysis.GetRange(
                     tableau,
                     column);
         }

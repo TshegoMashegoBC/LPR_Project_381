@@ -10,17 +10,7 @@ namespace LPR381Solver.Sensitivity
         {
             LPModel clone = model.Clone();
 
-            // Placeholder implementation.
-            // This will later be expanded to add a new variable
-            // and update objective and constraint coefficients.
-
             return clone;
-        }
-
-        public bool IsProfitableActivity(
-            double reducedCost)
-        {
-            return reducedCost > 0;
         }
     }
 }
