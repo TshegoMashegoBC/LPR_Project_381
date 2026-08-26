@@ -18,4 +18,3 @@ namespace LPR381Solver.Sensitivity
         }
     }
 }
-``

@@ -1,25 +1,27 @@
-using System;
 using System.Collections.Generic;
-using LPR381Solver.Core;
 
-namespace LPR381Solver.Sensitivity
+namespace LPR381Solver.Core
 {
-    public class ShadowPriceCalculator
+    public class SolveResult
     {
-        public Dictionary<string, double> Calculate(Tableau tableau)
+        public string AlgorithmName { get; }
+        public SolveStatus Status { get; }
+        public IReadOnlyList<Tableau> Iterations { get; }
+        public double? ObjectiveValue { get; }
+        public double[]? VariableValues { get; }
+
+        public SolveResult(
+            string algorithmName,
+            SolveStatus status,
+            IReadOnlyList<Tableau> iterations,
+            double? objectiveValue = null,
+            double[]? variableValues = null)
         {
-            var shadowPrices = new Dictionary<string, double>();
-
-            for (int c = 0; c < tableau.VariableNames.Count; c++)
-            {
-                if (tableau.VariableKinds[c] == VariableKind.Slack)
-                {
-                    shadowPrices[tableau.VariableNames[c]]
-                        = tableau.Matrix[0, c];
-                }
-            }
-
-            return shadowPrices;
+            AlgorithmName = algorithmName;
+            Status = status;
+            Iterations = iterations;
+            ObjectiveValue = objectiveValue;
+            VariableValues = variableValues;
         }
     }
 }
