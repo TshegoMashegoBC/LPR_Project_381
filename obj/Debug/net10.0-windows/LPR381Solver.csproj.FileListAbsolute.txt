@@ -1,0 +1,15 @@
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\bin\Debug\net10.0-windows\solve.exe
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\bin\Debug\net10.0-windows\solve.deps.json
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\bin\Debug\net10.0-windows\solve.runtimeconfig.json
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\bin\Debug\net10.0-windows\solve.dll
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\bin\Debug\net10.0-windows\solve.pdb
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\LPR381Solver.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\LPR381Solver.AssemblyInfoInputs.cache
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\LPR381Solver.AssemblyInfo.cs
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\LPR381Solver.csproj.CoreCompileInputs.cache
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\LPR381Solver.sourcelink.json
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\solve.dll
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\refint\solve.dll
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\solve.pdb
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\LPR381Solver.genruntimeconfig.cache
+C:\Users\charl\OneDrive\Documents\GitHub\LPR_Project_381\obj\Debug\net10.0-windows\ref\solve.dll

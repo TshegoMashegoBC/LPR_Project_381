@@ -1,115 +1,83 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
+using LPR381Solver.Core;
 
-namespace LPR381Solver.Core
+namespace LPR381Solver.Algorithms
 {
-    /// <summary>
-    /// Converts an LPModel (the model *as entered* - the brief is explicit that
-    /// the input file must not already be in canonical/relaxed form) into the
-    /// standard max / &lt;=-style canonical form and an initial Tableau.
-    ///
-    /// This is the one place canonical-form logic lives, so every algorithm and
-    /// the output writer's "Canonical Form" section all agree on the same
-    /// transformation instead of each re-deriving it slightly differently.
-    ///
-    /// Scope note for the team: this builds the *initial* tableau (standard
-    /// form + slack/surplus/artificial columns). It does not run Big-M or
-    /// two-phase to drive artificial variables out - that pivoting logic is
-    /// algorithm-specific and belongs to whoever implements Primal Simplex.
-    /// </summary>
     public static class CanonicalFormBuilder
     {
         public static Tableau BuildInitialTableau(LPModel model)
         {
-            model.Validate();
-
-            int n = model.VariableCount;
-            int m = model.ConstraintCount;
-
-            // Standardize the objective to max form (min -> max by negating),
-            // so every algorithm can assume "maximize" and IsOptimalForMax applies.
-            double sign = model.ObjectiveType == ObjectiveType.Max ? 1.0 : -1.0;
-            var objective = model.ObjectiveCoefficients.Select(c => c * sign).ToArray();
-
-            // Work out how many extra columns (slack/surplus/artificial) each
-            // constraint needs, in order, before allocating the matrix.
-            var extraColumns = new List<(VariableKind kind, int constraintRow)>();
-            foreach (var (constraint, row) in model.Constraints.Select((c, i) => (c, i)))
+            int decisionVars = model.VariableCount;
+            int numConstraints = model.ConstraintCount;
+            
+            int slackCount = 0, excessCount = 0, artificialCount = 0;
+            foreach (var c in model.Constraints)
             {
-                switch (constraint.Relation)
+                if (c.Relation == Relation.LessOrEqual) slackCount++;
+                else if (c.Relation == Relation.GreaterOrEqual) { excessCount++; artificialCount++; }
+                else if (c.Relation == Relation.Equal) artificialCount++;
+            }
+
+            int totalCols = decisionVars + slackCount + excessCount + artificialCount + 1; 
+            int totalRows = numConstraints + 1; 
+
+            double[,] matrix = new double[totalRows, totalCols];
+            var basicIndices = new List<int>();
+            var varNames = new List<string>();
+            var varKinds = new List<VariableKind>();
+
+            for (int i = 0; i < decisionVars; i++)
+            {
+                matrix[0, i] = model.ObjectiveType == ObjectiveType.Max ? -model.ObjectiveCoefficients[i] : model.ObjectiveCoefficients[i];
+                varNames.Add($"x{i + 1}");
+                varKinds.Add(VariableKind.Decision);
+            }
+
+            int currentCol = decisionVars;
+            int sCount = 1, eCount = 1, aCount = 1;
+
+            for (int r = 0; r < numConstraints; r++)
+            {
+                int rowIdx = r + 1;
+                var constraint = model.Constraints[r];
+
+                for (int c = 0; c < decisionVars; c++)
+                    matrix[rowIdx, c] = constraint.Coefficients[c];
+
+                matrix[rowIdx, totalCols - 1] = constraint.Rhs;
+
+                if (constraint.Relation == Relation.LessOrEqual)
                 {
-                    case Relation.LessOrEqual:
-                        extraColumns.Add((VariableKind.Slack, row));
-                        break;
-                    case Relation.GreaterOrEqual:
-                        extraColumns.Add((VariableKind.Surplus, row));
-                        extraColumns.Add((VariableKind.Artificial, row));
-                        break;
-                    case Relation.Equal:
-                        extraColumns.Add((VariableKind.Artificial, row));
-                        break;
-                    default:
-                        throw new InvalidOperationException($"Unhandled relation: {constraint.Relation}");
+                    matrix[rowIdx, currentCol] = 1.0;
+                    basicIndices.Add(currentCol);
+                    varNames.Add($"s{sCount++}");
+                    varKinds.Add(VariableKind.Slack);
+                    currentCol++;
+                }
+                else if (constraint.Relation == Relation.GreaterOrEqual)
+                {
+                    matrix[rowIdx, currentCol] = -1.0;
+                    varNames.Add($"e{eCount++}");
+                    varKinds.Add(VariableKind.Excess); //[cite: 2]
+                    currentCol++;
+
+                    matrix[rowIdx, currentCol] = 1.0;
+                    basicIndices.Add(currentCol);
+                    varNames.Add($"a{aCount++}");
+                    varKinds.Add(VariableKind.Artificial);
+                    currentCol++;
+                }
+                else if (constraint.Relation == Relation.Equal)
+                {
+                    matrix[rowIdx, currentCol] = 1.0;
+                    basicIndices.Add(currentCol);
+                    varNames.Add($"a{aCount++}");
+                    varKinds.Add(VariableKind.Artificial);
+                    currentCol++;
                 }
             }
 
-            int totalColumns = n + extraColumns.Count + 1; // +1 for RHS
-            var matrix = new double[m + 1, totalColumns];
-
-            // Objective row: -c_j under each decision variable column, so that
-            // (once optimal) row 0's RHS entry reads off as the objective value.
-            for (int j = 0; j < n; j++)
-                matrix[0, j] = -objective[j];
-
-            // Decision variable coefficients, one constraint row at a time.
-            for (int i = 0; i < m; i++)
-                for (int j = 0; j < n; j++)
-                    matrix[i + 1, j] = model.Constraints[i].Coefficients[j];
-
-            var variableNames = new List<string>(Enumerable.Range(1, n).Select(i => $"x{i}"));
-            var variableKinds = new List<VariableKind>(Enumerable.Repeat(VariableKind.Decision, n));
-            var basicVariableIndices = new List<int>(new int[m]);
-
-            int col = n;
-            int slackCount = 0, surplusCount = 0, artificialCount = 0;
-
-            foreach (var (kind, row) in extraColumns)
-            {
-                string name;
-                double coefficientInOwnRow;
-
-                switch (kind)
-                {
-                    case VariableKind.Slack:
-                        name = $"s{++slackCount}";
-                        coefficientInOwnRow = 1.0;
-                        basicVariableIndices[row] = col; // slack is basic immediately for <=
-                        break;
-                    case VariableKind.Surplus:
-                        name = $"e{++surplusCount}"; // "excess"/surplus variable
-                        coefficientInOwnRow = -1.0;
-                        break;
-                    case VariableKind.Artificial:
-                        name = $"a{++artificialCount}";
-                        coefficientInOwnRow = 1.0;
-                        basicVariableIndices[row] = col; // artificial is basic immediately for >= and =
-                        break;
-                    default:
-                        throw new InvalidOperationException($"Unhandled variable kind: {kind}");
-                }
-
-                matrix[row + 1, col] = coefficientInOwnRow;
-                variableNames.Add(name);
-                variableKinds.Add(kind);
-                col++;
-            }
-
-            int rhsCol = totalColumns - 1;
-            for (int i = 0; i < m; i++)
-                matrix[i + 1, rhsCol] = model.Constraints[i].Rhs;
-
-            return new Tableau(matrix, basicVariableIndices, variableNames, variableKinds, iterationNumber: 0);
+            return new Tableau(matrix, basicIndices, varNames, varKinds, 0);
         }
     }
 }

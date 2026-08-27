@@ -5,26 +5,18 @@ using LPR381Solver.Core;
 
 namespace LPR381Solver.Algorithms
 {
-    /// <summary>
-    /// Person D's Implementation: Branch & Bound Knapsack Algorithm.
-    /// Solves a 0/1 knapsack model (single <= constraint, all variables binary)
-    /// by branching on "include item" / "exclude item" and fathoming with the
-    /// fractional relaxation bound (classic Dantzig/greedy bound by profit-to-weight ratio).
-    /// </summary>
     public class BranchAndBoundKnapsackAlgorithm : IAlgorithm
     {
-        public string Name => "Branch & Bound Knapsack Algorithm (Person D)";
+        public string Name => "Branch & Bound Knapsack Algorithm";
         private const double Tolerance = 1e-6;
 
-        // One node = one partial decision on the items, in ratio-sorted order.
-        // Level tells us how many items (in sorted order) have been decided.
         private class Node
         {
             public int Level;
             public double Weight;
             public double Profit;
             public double Bound;
-            public int[] Assignment = Array.Empty<int>(); // indexed by ORIGINAL variable index: 1 in, 0 out, -1 undecided
+            public int[] Assignment = Array.Empty<int>(); 
         }
 
         public SolveResult Solve(LPModel model)
@@ -37,24 +29,15 @@ namespace LPR381Solver.Algorithms
             double[] profits = model.ObjectiveCoefficients;
 
             var iterations = new List<Tableau>();
+            if (capacity < 0) return new SolveResult(Name, SolveStatus.Infeasible, iterations);
 
-            if (capacity < 0)
-                return new SolveResult(Name, SolveStatus.Infeasible, iterations);
-
-            // Decide items best profit-to-weight ratio first - this is what makes
-            // the fractional relaxation bound tight enough to fathom early.
-            int[] order = Enumerable.Range(0, n)
-                .OrderByDescending(i => profits[i] / weights[i])
-                .ToArray();
-
-            double bestProfit = 0; // the empty selection is always feasible
+            int[] order = Enumerable.Range(0, n).OrderByDescending(i => profits[i] / weights[i]).ToArray();
+            double bestProfit = 0; 
             int[] bestAssignment = new int[n];
 
             var root = new Node
             {
-                Level = 0,
-                Weight = 0,
-                Profit = 0,
+                Level = 0, Weight = 0, Profit = 0,
                 Assignment = Enumerable.Repeat(-1, n).ToArray()
             };
             root.Bound = ComputeBoundDetailed(root, order, weights, profits, capacity, n).bound;
@@ -68,17 +51,12 @@ namespace LPR381Solver.Algorithms
                 var node = stack.Pop();
                 iterations.Add(BuildTableau(node, order, weights, profits, capacity, n, iterationNumber++));
 
-                // Fathoming rule: bound cannot beat the best integer solution found so far
-                if (node.Bound <= bestProfit + Tolerance)
-                    continue;
-
-                if (node.Level == n)
-                    continue; // leaf - already scored below when it was created
+                if (node.Bound <= bestProfit + Tolerance) continue;
+                if (node.Level == n) continue; 
 
                 int itemIndex = order[node.Level];
 
-                // Branch: include the item, but only if it still fits
-                if (node.Weight + weights[itemIndex] <= capacity + Tolerance)
+                if (node.Weight + weights[itemIndex] <= capacity + Tolerance) //[cite: 7]
                 {
                     var includeNode = CloneNode(node);
                     includeNode.Level++;
@@ -101,8 +79,7 @@ namespace LPR381Solver.Algorithms
                     }
                 }
 
-                // Branch: exclude the item
-                var excludeNode = CloneNode(node);
+                var excludeNode = CloneNode(node); //[cite: 7]
                 excludeNode.Level++;
                 excludeNode.Assignment[itemIndex] = 0;
                 excludeNode.Bound = ComputeBoundDetailed(excludeNode, order, weights, profits, capacity, n).bound;
@@ -125,10 +102,6 @@ namespace LPR381Solver.Algorithms
             return new SolveResult(Name, SolveStatus.Optimal, iterations, bestProfit, variableValues);
         }
 
-        // Fractional relaxation bound: take items in ratio order, fill capacity greedily,
-        // and let the last item that doesn't fully fit contribute a fractional share.
-        // Also returns the fractional assignment per item so the sub-problem tableau has
-        // something meaningful to display for the still-undecided items.
         private static (double bound, double[] fractional) ComputeBoundDetailed(
             Node node, int[] order, double[] weights, double[] profits, double capacity, int n)
         {
@@ -156,28 +129,18 @@ namespace LPR381Solver.Algorithms
                     break;
                 }
             }
-
             return (bound, fractional);
         }
 
         private static Node CloneNode(Node source) => new Node
         {
-            Level = source.Level,
-            Weight = source.Weight,
-            Profit = source.Profit,
-            Bound = source.Bound,
-            Assignment = (int[])source.Assignment.Clone()
+            Level = source.Level, Weight = source.Weight, Profit = source.Profit,
+            Bound = source.Bound, Assignment = (int[])source.Assignment.Clone()
         };
 
-        // Turns a B&B node into a Tableau snapshot so it fits the shared
-        // "display every sub-problem" output format used by the other algorithms.
-        // Row 0 = current item values (0/1 decided, fractional for the split item, bound in RHS).
-        // Row 1 = the knapsack constraint itself (weights, capacity).
-        private static Tableau BuildTableau(
-            Node node, int[] order, double[] weights, double[] profits, double capacity, int n, int iterationNumber)
+        private static Tableau BuildTableau(Node node, int[] order, double[] weights, double[] profits, double capacity, int n, int iterationNumber)
         {
             var (bound, fractional) = ComputeBoundDetailed(node, order, weights, profits, capacity, n);
-
             var matrix = new double[2, n + 1];
             for (int j = 0; j < n; j++)
             {
@@ -196,22 +159,10 @@ namespace LPR381Solver.Algorithms
 
         private static void ValidateKnapsackModel(LPModel model)
         {
-            if (model.ConstraintCount != 1)
-                throw new ModelValidationException(
-                    "Branch & Bound Knapsack only supports a single-constraint (0/1 knapsack) model.");
-
-            if (model.Constraints[0].Relation != Relation.LessOrEqual)
-                throw new ModelValidationException("Branch & Bound Knapsack requires a <= capacity constraint.");
-
-            if (model.ObjectiveType != ObjectiveType.Max)
-                throw new ModelValidationException("Branch & Bound Knapsack only supports maximisation.");
-
+            if (model.ConstraintCount != 1 || model.Constraints[0].Relation != Relation.LessOrEqual || model.ObjectiveType != ObjectiveType.Max)
+                throw new ModelValidationException("Knapsack requires a single <= capacity constraint and maximization.");
             if (!model.SignRestrictions.All(s => s == SignRestriction.Binary))
-                throw new ModelValidationException(
-                    "Branch & Bound Knapsack requires every decision variable to be binary (bin).");
-
-            if (model.Constraints[0].Coefficients.Any(w => w <= 0))
-                throw new ModelValidationException("Branch & Bound Knapsack requires strictly positive item weights.");
+                throw new ModelValidationException("Knapsack requires binary (bin) restrictions on all variables."); //[cite: 7]
         }
     }
 }

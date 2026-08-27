@@ -4,38 +4,16 @@ using LPR381Solver.Core;
 
 namespace LPR381Solver.Algorithms
 {
-    /// <summary>
-    /// A working Primal Simplex solver using the Big-M method, built as
-    /// scaffolding so the menu/output pipeline has something real to run
-    /// end-to-end before Person B's actual Primal Simplex / Revised Simplex
-    /// work is done.
-    ///
-    /// This is NOT a claim on Person B's marks - it's here so:
-    ///   (a) the rest of the team can see the full pipeline work today, and
-    ///   (b) Person B has a working reference to check their own
-    ///       implementation against (or extend/replace outright).
-    ///
-    /// Known limitations (by design, not oversight):
-    ///   - Solves the continuous LP relaxation only. It does NOT enforce
-    ///     integer/binary restrictions - that's Branch &amp; Bound's job
-    ///     (Person C / Person D), which will call this same tableau pipeline
-    ///     per sub-problem with tightened bounds.
-    ///   - Uses Bland's rule (smallest-index entering/leaving variable,
-    ///     rather than "most negative"/"smallest ratio" with arbitrary
-    ///     tie-breaking) specifically because it provably prevents cycling -
-    ///     important for a reference implementation meant to always terminate.
-    /// </summary>
     public class PrimalSimplexAlgorithm : IAlgorithm
     {
-        public string Name => "Primal Simplex (Big-M) [reference - replace with Person B's implementation]";
-
+        public string Name => "Primal Simplex Algorithm";
         private const double BigM = 1_000_000;
         private const double Tolerance = 1e-9;
         private const int MaxIterations = 500;
 
         public SolveResult Solve(LPModel model)
         {
-            var tableau = CanonicalFormBuilder.BuildInitialTableau(model);
+            var tableau = CanonicalFormBuilder.BuildInitialTableau(model); 
             ApplyBigMPenalty(tableau);
 
             var iterations = new List<Tableau> { tableau.Clone() };
@@ -44,8 +22,7 @@ namespace LPR381Solver.Algorithms
             while (!tableau.IsOptimalForMax(Tolerance))
             {
                 if (++iterationCount > MaxIterations)
-                    throw new InvalidOperationException(
-                        $"{Name}: exceeded {MaxIterations} iterations without reaching optimality - possible cycling or a modelling error.");
+                    throw new InvalidOperationException("Exceeded max iterations without reaching optimality.");
 
                 int enteringCol = FindEnteringColumn(tableau);
                 int leavingRow = FindLeavingRow(tableau, enteringCol);
@@ -66,14 +43,6 @@ namespace LPR381Solver.Algorithms
             return new SolveResult(Name, SolveStatus.Optimal, iterations, objectiveValue, variableValues);
         }
 
-        /// <summary>
-        /// Artificial variables start basic with an implicit -M penalty in the
-        /// true objective. Since CanonicalFormBuilder leaves their objective-row
-        /// entries at 0 (it's algorithm-agnostic), this sets them to +M in our
-        /// "-c_j" row-0 convention, then eliminates them from row 0 so the
-        /// tableau is back in proper canonical form (row 0 must be zero under
-        /// every currently-basic column).
-        /// </summary>
         private static void ApplyBigMPenalty(Tableau tableau)
         {
             for (int col = 0; col < tableau.VariableKinds.Count; col++)
@@ -94,7 +63,6 @@ namespace LPR381Solver.Algorithms
             }
         }
 
-        /// <summary>Bland's rule: smallest-index column with a negative row-0 entry. Guarantees termination (no cycling) rather than chasing the "most negative" column.</summary>
         private static int FindEnteringColumn(Tableau tableau)
         {
             for (int c = 0; c < tableau.ColumnCount - 1; c++)
@@ -102,7 +70,6 @@ namespace LPR381Solver.Algorithms
             return -1;
         }
 
-        /// <summary>Minimum-ratio test; ties broken by smallest basic-variable index (Bland's rule) for the same anti-cycling guarantee.</summary>
         private static int FindLeavingRow(Tableau tableau, int enteringCol)
         {
             int bestRow = -1;
@@ -127,7 +94,6 @@ namespace LPR381Solver.Algorithms
                     bestBasicIndex = basicIndex;
                 }
             }
-
             return bestRow;
         }
 
@@ -170,10 +136,7 @@ namespace LPR381Solver.Algorithms
             }
 
             double rawZ = tableau.GetRhs(0);
-            // Internally everything is solved as a max problem (CanonicalFormBuilder
-            // negates a min objective) - flip the sign back for a min model here.
             double objectiveValue = model.ObjectiveType == ObjectiveType.Max ? rawZ : -rawZ;
-
             return (objectiveValue, values);
         }
     }

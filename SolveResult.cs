@@ -1,34 +1,23 @@
+using System;
 using System.Collections.Generic;
 
 namespace LPR381Solver.Core
 {
-    /// <summary>
-    /// What every algorithm hands back after solving a model: its full
-    /// iteration history (for the output file's "display all tableau
-    /// iterations" requirement), the final status, and - if optimal - the
-    /// objective value and decision variable values decoded from the final
-    /// tableau.
-    /// </summary>
     public class SolveResult
     {
-        public string AlgorithmName { get; }
+        public string SolverName { get; }
         public SolveStatus Status { get; }
-        public IReadOnlyList<Tableau> Iterations { get; }
+        public List<Tableau> Iterations { get; }
         public double? ObjectiveValue { get; }
-        public double[]? VariableValues { get; }
+        public double[] VariableValues { get; }
 
-        public SolveResult(
-            string algorithmName,
-            SolveStatus status,
-            IReadOnlyList<Tableau> iterations,
-            double? objectiveValue = null,
-            double[]? variableValues = null)
+        public SolveResult(string solverName, SolveStatus status, List<Tableau> iterations, double? objectiveValue = null, double[]? variableValues = null)
         {
-            AlgorithmName = algorithmName;
+            SolverName = solverName;
             Status = status;
-            Iterations = iterations;
+            Iterations = iterations ?? new List<Tableau>();
             ObjectiveValue = objectiveValue;
-            VariableValues = variableValues;
+            VariableValues = variableValues ?? Array.Empty<double>();
         }
     }
 }

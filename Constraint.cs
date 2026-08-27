@@ -3,10 +3,6 @@ using System.Linq;
 
 namespace LPR381Solver.Core
 {
-    /// <summary>
-    /// A single constraint exactly as read from the input file: signed
-    /// technological coefficients, a relation (&lt;=, &gt;=, =), and a right-hand side.
-    /// </summary>
     public class Constraint
     {
         public double[] Coefficients { get; }
@@ -20,11 +16,6 @@ namespace LPR381Solver.Core
             Rhs = rhs;
         }
 
-        /// <summary>
-        /// Deep copy. Sensitivity analysis (e.g. "apply and display a change of a
-        /// selected RHS value") must be able to try a modification without
-        /// mutating the model that produced the original optimal tableau.
-        /// </summary>
         public Constraint Clone() => new Constraint((double[])Coefficients.Clone(), Relation, Rhs);
 
         public override string ToString()
